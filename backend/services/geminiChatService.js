@@ -95,7 +95,7 @@ export const buildContents = (context, message, history = []) => {
 
 export const askGemini = async (context, message, history = []) => {
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",//gemini-3.8-flash is working properly but i didn't change bcz of permission
+    model: "gemini-3.8-flash",
     contents: buildContents(context, message, history),
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
