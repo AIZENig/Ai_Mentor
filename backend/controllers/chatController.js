@@ -81,6 +81,15 @@ export const chatWithAssistant = async (req, res) => {
 
     const message = rawMessage.trim();
 
+    // Optional earlier turns: [{ role: "user" | "model", text }]
+    const history = req.body?.history;
+
+    if (history !== undefined && !Array.isArray(history)) {
+      return res.status(400).json({
+        message: "History must be an array",
+      });
+    }
+
     if (message.length > MAX_MESSAGE_LENGTH) {
       return res.status(400).json({
         message: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer`,
@@ -238,7 +247,7 @@ export const chatWithAssistant = async (req, res) => {
     let geminiReply;
     try {
       geminiReply = await withTimeout(
-        askGemini(context, message),
+        askGemini(context, message, history),
         GEMINI_TIMEOUT_MS
       );
     } catch (geminiError) {
