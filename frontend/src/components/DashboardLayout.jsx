@@ -8,6 +8,7 @@ const routeToPage = {
   "/dashboard": "dashboard",
   "/analytics": "analytics",
   "/courses": "courses",
+  "/code-explainer": "code-explainer",
   "/discussions": "discussions",
   "/settings": "settings",
   "/watchedvideos": "watched",
@@ -29,7 +30,7 @@ const DashboardLayout = () => {
       <Header />
       <Sidebar activePage={activePage} />
       <div
-        className={`flex-1 flex flex-col transition-[margin-left] duration-300 mt-[4.5rem] ${
+        className={`flex-1 flex flex-col transition-[margin-left] duration-300 mt-18] ${
           isDesktop ? (sidebarCollapsed ? "ml-20" : "ml-80") : ""
         }`}
       >
