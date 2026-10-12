@@ -236,4 +236,3 @@ export const chatWithAssistant = async (req, res) => {
     });
   }
 };
-};
