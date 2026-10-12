@@ -45,7 +45,7 @@ export const getChatContext = async (req, res) => {
 
 export const chatWithAssistant = async (req, res) => {
   try {
-    const { message, history } = req.body;
+    const { message, history = [] } = req.body;
 
     if (!message || !message.trim()) {
       return res.status(400).json({
@@ -54,7 +54,7 @@ export const chatWithAssistant = async (req, res) => {
     }
 
     // Optional earlier turns: [{ role: "user" | "model", text }]
-    if (history !== undefined && !Array.isArray(history)) {
+    if (!Array.isArray(history)) {
       return res.status(400).json({
         message: "History must be an array",
       });
@@ -129,7 +129,7 @@ export const chatWithAssistant = async (req, res) => {
     }
 
     //recommendation
-    if(intent.type === "recommendation") {
+    if (intent.type === "recommendation") {
       const courses = user.purchasedCourses || [];
       if (!courses.length) {
         return res.json({
@@ -137,14 +137,14 @@ export const chatWithAssistant = async (req, res) => {
         });
       }
 
-      const course= courses[0];
+      const course = courses[0];
       return res.json({
         reply: `I recommend continuing ${course.courseTitle}.`,
       });
     }
 
     //current lesson
-    if(intent.type === "current_lesson"){
+    if (intent.type === "current_lesson") {
       const courses = user.purchasedCourses || [];
 
       const activeCourse = courses.find(
@@ -157,7 +157,7 @@ export const chatWithAssistant = async (req, res) => {
         });
       }
 
-       return res.json({
+      return res.json({
         reply: `You were last studying lesson ${activeCourse.progress.currentLesson} in ${activeCourse.courseTitle}.`,
       });
     }
@@ -239,11 +239,11 @@ export const chatWithAssistant = async (req, res) => {
       reply: cleanedReply,
       route,
     });
-    } catch (error) {
-      console.error("CHAT ERROR:", error);
+  } catch (error) {
+    console.error("CHAT ERROR:", error);
 
-      res.status(500).json({
-        message: "Failed to process chat",
-      });
-    }
+    res.status(500).json({
+      message: "Failed to process chat",
+    });
+  }
 };
