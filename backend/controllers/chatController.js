@@ -10,7 +10,6 @@ import { detectNavigation } from "../services/navigationService.js";
 //   apiKey: process.env.GEMINI_API_KEY,
 // });
 
-
 export const getChatContext = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
@@ -33,7 +32,6 @@ export const getChatContext = async (req, res) => {
 
       preferences: preferences || {},
     });
-
   } catch (error) {
     console.error(error);
 
@@ -98,9 +96,7 @@ export const chatWithAssistant = async (req, res) => {
         });
       }
 
-      const list = courses
-        .map((course, index) => `${index + 1}. ${course.courseTitle}`)
-        .join("\n");
+      const list = courses.map((course, index) => `${index + 1}. ${course.courseTitle}`).join("\n");
 
       return res.json({
         reply: `Hi ${userName}, you are currently enrolled in:\n\n${list}`,
@@ -117,14 +113,20 @@ export const chatWithAssistant = async (req, res) => {
 
       return res.json({
         reply: `
-        Learning Goal: ${preferences.learning_goal}
+        Learning Goal: ${preferences.learning_goal || "Unknown"}
 
-        Experience Level: ${preferences.experience_level}
+        Experience Level: ${preferences.experience_level || "Unknown"}
+        
+        Explanation Type: ${preferences.explanation_type || "Unknown"}
 
-        Learning Style: ${preferences.learning_style}
+        Learning Style: ${preferences.learning_style || "Unknown"}
 
-        Weekly Commitment: ${preferences.weekly_commitment}
-                `,
+        Teaching Pace: ${preferences.teaching_pace || "Unknown"}
+
+        Example Type: ${preferences.example_type || "Unknown"}
+
+        Focus Area: ${preferences.focus_area || "Unknown"}
+        `,
       });
     }
 
@@ -147,9 +149,7 @@ export const chatWithAssistant = async (req, res) => {
     if (intent.type === "current_lesson") {
       const courses = user.purchasedCourses || [];
 
-      const activeCourse = courses.find(
-        (c) => c.progress?.currentLesson
-      );
+      const activeCourse = courses.find((c) => c.progress?.currentLesson);
 
       if (!activeCourse) {
         return res.json({
@@ -180,21 +180,18 @@ export const chatWithAssistant = async (req, res) => {
       const courseProgress = [];
 
       courses.forEach((course) => {
-        const completed =
-          course.progress?.completedLessons?.length || 0;
+        const completed = course.progress?.completedLessons?.length || 0;
 
         completedLessons += completed;
 
-        courseProgress.push(
-          `${course.courseTitle}: ${completed} completed lessons`
-        );
+        courseProgress.push(`${course.courseTitle}: ${completed} completed lessons`);
       });
 
       return res.json({
         reply: `Hi ${userName},
         You are enrolled in ${courses.length} course(s).
         Total completed lessons: ${completedLessons}
-        ${courseProgress.join("\n")}`
+        ${courseProgress.join("\n")}`,
       });
     }
 
@@ -207,10 +204,7 @@ export const chatWithAssistant = async (req, res) => {
       });
     }
 
-    const context = buildUserContext(
-      user,
-      preferences
-    );
+    const context = buildUserContext(user, preferences);
 
     const geminiReply = await askGemini(
       context,
@@ -221,19 +215,14 @@ export const chatWithAssistant = async (req, res) => {
     // Check if Gemini returned a route
     let route = null;
 
-    const routeMatch = geminiReply.match(
-      /ROUTE:(.+)/i
-    );
+    const routeMatch = geminiReply.match(/ROUTE:(.+)/i);
 
     if (routeMatch) {
       route = routeMatch[1].trim();
     }
 
     // Remove ROUTE from visible message
-    const cleanedReply = geminiReply.replace(
-      /ROUTE:.*/i,
-      ""
-    ).trim();
+    const cleanedReply = geminiReply.replace(/ROUTE:.*/i, "").trim();
 
     return res.json({
       reply: cleanedReply,
@@ -246,4 +235,5 @@ export const chatWithAssistant = async (req, res) => {
       message: "Failed to process chat",
     });
   }
+};
 };
