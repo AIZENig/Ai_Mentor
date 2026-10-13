@@ -4,13 +4,8 @@ import assert from "node:assert/strict";
 process.env.NODE_ENV = "test";
 process.env.GEMINI_API_KEY = "test-key";
 
-const {
-  askGemini,
-  buildContents,
-  formatHistory,
-  MAX_HISTORY_MESSAGES,
-  MAX_HISTORY_TEXT_LENGTH,
-} = await import("../services/geminiChatService.js");
+const { askGemini, buildContents, formatHistory, MAX_HISTORY_MESSAGES, MAX_HISTORY_TEXT_LENGTH } =
+  await import("../services/geminiChatService.js");
 const { chatWithAssistant } = await import("../controllers/chatController.js");
 
 const turn = (role, text) => ({ role, parts: [{ text }] });
@@ -20,8 +15,14 @@ const response = () => {
   return {
     state,
     res: {
-      status(code) { state.statusCode = code; return this; },
-      json(body) { state.body = body; return this; },
+      status(code) {
+        state.statusCode = code;
+        return this;
+      },
+      json(body) {
+        state.body = body;
+        return this;
+      },
     },
   };
 };
@@ -44,7 +45,7 @@ test("history accepts Gemini-style parts and the model role", () => {
       { role: "user", parts: [{ text: "Hi" }] },
       { role: "model", parts: [{ text: "Hello" }] },
     ]),
-    [turn("user", "Hi"), turn("model", "Hello")]
+    [turn("user", "Hi"), turn("model", "Hello")],
   );
 });
 
@@ -63,7 +64,7 @@ test("history ignores invalid input and invalid entries", () => {
       { role: "user", text: 123 },
       { role: "user", text: "Real question" },
     ]),
-    [turn("user", "Real question")]
+    [turn("user", "Real question")],
   );
 });
 
@@ -74,7 +75,7 @@ test("history drops a leading greeting so it starts with a user turn", () => {
       { role: "user", text: "What is React?" },
       { role: "model", text: "A UI library." },
     ]),
-    [turn("user", "What is React?"), turn("model", "A UI library.")]
+    [turn("user", "What is React?"), turn("model", "A UI library.")],
   );
 });
 
@@ -131,7 +132,7 @@ test("askGemini sends previous turns to Gemini and returns its reply", async () 
       JSON.stringify({
         candidates: [{ content: { role: "model", parts: [{ text: "Step 2 means ..." }] } }],
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json" } },
     );
   };
 
@@ -142,7 +143,10 @@ test("askGemini sends previous turns to Gemini and returns its reply", async () 
     ]);
 
     assert.equal(reply, "Step 2 means ...");
-    assert.deepEqual(sentBody.contents.map((c) => c.role), ["user", "model", "user"]);
+    assert.deepEqual(
+      sentBody.contents.map((c) => c.role),
+      ["user", "model", "user"],
+    );
     assert.equal(sentBody.contents[0].parts[0].text, "Give me a 3 step plan");
     assert.equal(sentBody.contents[1].parts[0].text, "1. Read 2. Practice 3. Build");
     assert.equal(sentBody.contents[2].parts[0].text, "Can you explain step 2 further?");
@@ -157,7 +161,7 @@ test("chat rejects a history that is not an array", async () => {
     const outcome = response();
     await chatWithAssistant(
       { user: { id: "u" }, body: { message: "Explain step 2", history } },
-      outcome.res
+      outcome.res,
     );
 
     assert.equal(outcome.state.statusCode, 400, `history=${JSON.stringify(history)}`);

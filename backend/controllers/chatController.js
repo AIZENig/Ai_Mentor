@@ -206,11 +206,7 @@ export const chatWithAssistant = async (req, res) => {
 
     const context = buildUserContext(user, preferences);
 
-    const geminiReply = await askGemini(
-      context,
-      message,
-      history
-    );
+    const geminiReply = await askGemini(context, message, history);
 
     // Check if Gemini returned a route
     let route = null;
