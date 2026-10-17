@@ -30,6 +30,7 @@ from config import (
     GEMINI_MODEL,
     GROQ_API_KEY,
     LLM_TIMEOUT_SECONDS,
+    LOG_FORMAT,
     CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET,
@@ -39,6 +40,7 @@ GROQ_ENABLED,
 )
 import voices
 from avatar_service import create_avatar_video
+from logging_config import RequestIdMiddleware, job_id_var, setup_logging
 # --------------------------
 # Cloudinary Config
 # --------------------------
@@ -54,15 +56,20 @@ if CLOUDINARY_ENABLED:
 # FastAPI App
 # --------------------------
 logger = logging.getLogger(__name__)
+setup_logging(logger, LOG_FORMAT)
+
+_LOG_LEVELS = {"ERROR": logging.ERROR, "WARN": logging.WARNING, "WARNING": logging.WARNING}
 
 
 def log_event(level: str, message: str, **details):
     """Write compact, scan-friendly service logs without exposing payloads or URLs."""
-    suffix = ""
-    visible = [f"{key}={value}" for key, value in details.items() if value not in (None, "")]
-    if visible:
-        suffix = " | " + " | ".join(visible)
-    print(f"[{level}] {message}{suffix}", flush=True)
+    label = str(level).upper()
+    visible = {key: value for key, value in details.items() if value not in (None, "")}
+    logger.log(
+        _LOG_LEVELS.get(label, logging.INFO),
+        message,
+        extra={"event": label, "fields": visible},
+    )
 
 
 def short_error(error: Exception, limit: int = 180) -> str:
@@ -127,7 +134,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
+app.add_middleware(RequestIdMiddleware)
 
 # --------------------------
 # GEMINI Client (Primary)
@@ -859,6 +868,15 @@ async def run_tracked_lesson(data: LessonRequest, base_filename: str):
 
 
 async def process_lesson(data: LessonRequest, base_filename: str):
+    """Run one lesson job with its job_id bound to every log line."""
+    token = job_id_var.set(base_filename)
+    try:
+        await _process_lesson(data, base_filename)
+    finally:
+        job_id_var.reset(token)
+
+
+async def _process_lesson(data: LessonRequest, base_filename: str):
     log_event("QUEUE", "Lesson request accepted", job=base_filename, topic=data.topic, source=data.celebrity)
 
     start_time = time.time()

@@ -78,6 +78,7 @@ Create `ai_service/backend/.env` from `ai_service/backend/.env.example`.
 | ----------------------- | ----------------------------------------------- | ------------------------------------------------------ |
 | `GEMINI_API_KEY`        | Required                                        | Setup and AI startup fail with a clear error           |
 | `GEMINI_MODEL`          | Optional                                        | Uses the default model configured by the service       |
+| `LOG_FORMAT`            | Optional                                        | Uses plain text logs; set to `json` for JSON lines     |
 | `GROQ_API_KEY`          | Optional                                        | Groq fallback is disabled                              |
 | `CLOUDINARY_CLOUD_NAME` | Optional as part of the complete Cloudinary set | Cloud delivery is disabled when the set is incomplete  |
 | `CLOUDINARY_API_KEY`    | Optional as part of the complete Cloudinary set | Cloud delivery is disabled when the set is incomplete  |
@@ -149,6 +150,27 @@ Use the running service's FastAPI documentation for the current request and resp
 10. Return asset metadata and remove temporary local media after successful cloud delivery.
 
 The Node.js backend uses Redis or Memurai to queue and track video-generation work.
+
+## Logging
+
+Service logs carry correlation IDs so one generation can be followed end to end:
+
+- `request_id`: taken from the inbound `X-Request-ID` header (letters, digits, `.`, `_`, `-`, up to 128 characters) or generated. Every response returns it in the `X-Request-ID` header.
+- `job_id`: the job's base filename, bound for the whole run of `process_lesson`.
+
+Plain text is the default. IDs are appended only when set:
+
+```text
+[START] Lesson generation started | topic=React Hooks | job_id=React_Hooks_20261010_051244
+```
+
+Set `LOG_FORMAT=json` for one JSON object per line:
+
+```json
+{"ts": "2026-10-10T05:12:44Z", "level": "INFO", "logger": "api", "request_id": "9f2c...", "job_id": "React_Hooks_20261010_051244", "msg": "Lesson generation started", "event": "START", "topic": "React Hooks"}
+```
+
+Log lines still written with `print()` do not carry these IDs until they are moved to the logger.
 
 ## Testing
 
